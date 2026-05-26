@@ -73,7 +73,7 @@ const skuBase = [
 
 const marketProfiles: Record<Market, MarketProfile> = {
   "India Urban | All Channels": {
-    subtitle: "Nielsen + Numerator + HH Panel · MAT Mar'25 · India Urban",
+    subtitle: "Senniel + Numerator + HH Panel · MAT Mar'25 · India Urban",
     valueScale: 1,
     categoryGrowth: 8.3,
     brandAOffset: 0,
@@ -95,7 +95,7 @@ const marketProfiles: Record<Market, MarketProfile> = {
     insight: "E-Commerce is the fastest growing channel at +38.7% YoY, but contributes only 9.7% of total offtake. Modern Trade continues to show strong double-digit growth driven by urban premiumisation.",
   },
   "India Urban | Modern Trade": {
-    subtitle: "Nielsen + Numerator + HH Panel · MAT Mar'25 · Urban Modern Trade",
+    subtitle: "Senniel + Numerator + HH Panel · MAT Mar'25 · Urban Modern Trade",
     valueScale: 0.36,
     categoryGrowth: 12.1,
     brandAOffset: 3.2,
@@ -117,7 +117,7 @@ const marketProfiles: Record<Market, MarketProfile> = {
     insight: "Modern Trade over-indexes on premium packs: Brand A share and distribution improve together, with higher shelf presence supporting a stronger repeat-buy story.",
   },
   "India Urban | E-Commerce": {
-    subtitle: "Nielsen + Numerator + HH Panel · MAT Mar'25 · Urban E-Commerce",
+    subtitle: "Senniel + Numerator + HH Panel · MAT Mar'25 · Urban E-Commerce",
     valueScale: 0.14,
     categoryGrowth: 36.8,
     brandAOffset: 5.4,

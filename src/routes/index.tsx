@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ThemeToggle } from "@/components/dashboard/ThemeToggle";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -67,6 +68,7 @@ function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <DatasetDialog
               trigger={
                 <button
@@ -126,7 +128,7 @@ function Dashboard() {
         </section>
 
         <footer className="pt-2 text-center text-xs text-muted-foreground">
-          Demo dashboard built with React + Vite + Tailwind + Recharts. Data shown is illustrative.
+          Developed by <span className="font-semibold text-foreground/70">Manas Rath</span>. Data shown is illustrative/hypothetical.
         </footer>
       </div>
       <ChatbotWidget />

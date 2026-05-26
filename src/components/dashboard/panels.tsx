@@ -46,7 +46,7 @@ export function MarketSharePanel({ data }: { data: MarketDashboardData }) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       <div className="panel p-5 lg:col-span-2">
-        <PanelHeader title="Volume Share Trend — MAT (Nielsen)" />
+        <PanelHeader title="Volume Share Trend — MAT (Senniel)" />
         <div className="h-72">
           <ResponsiveContainer>
             <LineChart data={volumeShareTrend} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>

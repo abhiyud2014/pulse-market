@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { MessageCircle, X, Send, Sparkles, Loader2, RefreshCw } from "lucide-react";
+import { MessageCircle, X, Send, Sparkles, Loader2, RefreshCw, Mic, MicOff } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
@@ -31,8 +31,51 @@ function extractFollowUps(text: string): { clean: string; questions: string[] } 
 export function ChatbotWidget() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
+  const [recording, setRecording] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const recognitionRef = useRef<{ stop: () => void } | null>(null);
+
+  const toggleMic = useCallback(() => {
+    if (recording) {
+      recognitionRef.current?.stop();
+      setRecording(false);
+      return;
+    }
+    const w = window as unknown as Record<string, unknown>;
+    const SpeechRecognitionAPI = w.SpeechRecognition ?? w.webkitSpeechRecognition;
+    if (!SpeechRecognitionAPI) {
+      setInput((prev) => `${prev} [Speech not supported in this browser]`);
+      return;
+    }
+    const recognition = new (SpeechRecognitionAPI as new () => {
+      lang: string;
+      continuous: boolean;
+      interimResults: boolean;
+      start: () => void;
+      stop: () => void;
+      onresult: ((event: { results: Array<Array<{ transcript: string }>> }) => void) | null;
+      onerror: (() => void) | null;
+      onend: (() => void) | null;
+    })();
+    recognition.lang = "en-IN";
+    recognition.continuous = false;
+    recognition.interimResults = true;
+
+    recognition.onresult = (event) => {
+      const transcript = Array.from(event.results)
+        .map((r) => r[0].transcript)
+        .join("");
+      setInput(transcript);
+    };
+
+    recognition.onerror = () => setRecording(false);
+    recognition.onend = () => setRecording(false);
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setRecording(true);
+  }, [recording]);
 
   const { messages, setMessages, sendMessage, status, error } = useChat({
     transport: new DefaultChatTransport({ api: "/api/chat" }),
@@ -251,6 +294,20 @@ export function ChatbotWidget() {
               placeholder="Ask about a market, brand, SKU…"
               className="max-h-32 flex-1 resize-none rounded-md border border-border bg-background px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-ring"
             />
+            <button
+              type="button"
+              onClick={toggleMic}
+              disabled={isLoading}
+              className="flex size-9 shrink-0 items-center justify-center rounded-md transition-colors cursor-pointer disabled:opacity-40"
+              style={{
+                background: recording ? "var(--chart-red)" : "transparent",
+                color: recording ? "white" : "var(--muted-foreground)",
+                border: recording ? "none" : "1px solid var(--border)",
+              }}
+              aria-label={recording ? "Stop recording" : "Start voice input"}
+            >
+              {recording ? <MicOff className="size-4" /> : <Mic className="size-4" />}
+            </button>
             <Button
               type="submit"
               size="icon"
