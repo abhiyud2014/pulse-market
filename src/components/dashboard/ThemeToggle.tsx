@@ -15,12 +15,7 @@ const THEMES: Theme[] = [
   { id: "amber", name: "Amber Glow", preview: "Warm dark", colors: ["oklch(0.82 0.2 75)", "oklch(0.78 0.2 45)"] },
 ];
 
-function getCurrentTheme(): string {
-  if (typeof document === "undefined") return "";
-  return document.documentElement.getAttribute("data-theme") ?? "";
-}
-
-function setTheme(id: string) {
+function setThemeAttr(id: string) {
   if (id) {
     document.documentElement.setAttribute("data-theme", id);
   } else {
@@ -33,8 +28,13 @@ function setTheme(id: string) {
 
 export function ThemeToggle() {
   const [open, setOpen] = useState(false);
-  const [current, setCurrent] = useState(getCurrentTheme);
+  const [current, setCurrent] = useState("");
   const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const saved = document.documentElement.getAttribute("data-theme") ?? "";
+    setCurrent(saved);
+  }, []);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -47,7 +47,7 @@ export function ThemeToggle() {
   }, []);
 
   const select = (id: string) => {
-    setTheme(id);
+    setThemeAttr(id);
     setCurrent(id);
     setOpen(false);
   };
