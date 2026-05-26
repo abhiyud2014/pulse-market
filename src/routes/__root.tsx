@@ -72,18 +72,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
+      { title: "Market Pulse Dashboard — FMCG Beverage Intelligence" },
       { name: "description", content: "Market Pulse Dashboard visualizes syndicated retail, shipment, and household panel data for FMCG & Beverages market intelligence." },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
+      { name: "author", content: "Manas Rath" },
+      { property: "og:title", content: "Market Pulse Dashboard — FMCG Beverage Intelligence" },
       { property: "og:description", content: "Market Pulse Dashboard visualizes syndicated retail, shipment, and household panel data for FMCG & Beverages market intelligence." },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "Lovable App" },
-      { name: "twitter:description", content: "Market Pulse Dashboard visualizes syndicated retail, shipment, and household panel data for FMCG & Beverages market intelligence." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/92d2119c-11f2-46b5-bd24-857a71c7f9be/id-preview-af022f43--836f2dcc-427b-4658-b306-08fa6b356042.lovable.app-1779730571035.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/92d2119c-11f2-46b5-bd24-857a71c7f9be/id-preview-af022f43--836f2dcc-427b-4658-b306-08fa6b356042.lovable.app-1779730571035.png" },
     ],
     links: [
       {
