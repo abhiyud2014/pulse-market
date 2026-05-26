@@ -6,7 +6,8 @@ import {
   streamText,
   type UIMessage,
 } from "ai";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, ThinkingLevel } from "@google/genai";
+import Groq from "groq-sdk";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 import { MARKETS, getMarketData } from "@/components/dashboard/data";
 
@@ -54,6 +55,7 @@ function buildGoogleContents(system: string, messages: UIMessage[]) {
 }
 
 const googleClient = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY });
+const groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY ?? "" });
 
 async function createGoogleResponse(contents: Array<{ parts: Array<{ text: string }> }>) {
   const response = await googleClient.models.generateContent({
@@ -61,7 +63,7 @@ async function createGoogleResponse(contents: Array<{ parts: Array<{ text: strin
     contents,
     config: {
       thinkingConfig: {
-        thinkingLevel: "HIGH",
+        thinkingLevel: ThinkingLevel.HIGH,
       },
     },
   });
@@ -86,6 +88,100 @@ async function createGoogleResponse(contents: Array<{ parts: Array<{ text: strin
   return createUIMessageStreamResponse({ stream });
 }
 
+async function createGroqResponse(system: string, messages: UIMessage[]) {
+  const groqMessages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
+    { role: "system", content: system },
+    ...messages.map((m) => ({
+      role: (m.role === "user" ? "user" : "assistant") as "user" | "assistant",
+      content: getMessageText(m),
+    })),
+  ];
+
+  const stream = createUIMessageStream({
+    async execute({ writer }) {
+      const id = typeof crypto?.randomUUID === "function"
+        ? crypto.randomUUID()
+        : `assistant-${Date.now()}`;
+
+      writer.write({ type: "text-start", id });
+
+      const completion = await groqClient.chat.completions.create({
+        messages: groqMessages,
+        model: "llama-3.3-70b-versatile",
+        temperature: 0.7,
+        max_completion_tokens: 2048,
+        top_p: 1,
+        stream: true,
+        stop: null,
+      });
+
+      for await (const chunk of completion) {
+        const content = chunk.choices[0]?.delta?.content || "";
+        if (content) {
+          writer.write({ type: "text-delta", id, delta: content });
+        }
+      }
+
+      writer.write({ type: "text-end", id });
+    },
+  });
+
+  return createUIMessageStreamResponse({ stream });
+}
+
+function buildSystemPrompt(dataset: string) {
+  return `You are the embedded analytics assistant for an FMCG Beverage Market Intelligence dashboard.
+Answer questions strictly about the dashboard, its tabs (Market Share, Channel Sales, HH Panel, SKU Performance), and the dataset provided below. The dataset spans 5 markets, monthly trend (Aug'24 - Mar'25), brand shares (Brand A/B/C/Others), channel offtake & growth, HH penetration & buying frequency, buyer funnel, and SKU revenue/distribution.
+
+Rules:
+- Be concise. Use markdown, short bullets, and tables when comparing markets/SKUs.
+- Cite exact numbers from the dataset; never invent values.
+- If a question is outside the dataset/dashboard, say so briefly and suggest a related question you CAN answer.
+- All currency is INR (Cr = crores, L = lakhs). Shares are %.
+- At the very end of your response, suggest 3 relevant follow-up questions the user might want to ask next. Format them as a JSON array on a new line like this:
+__FOLLOW_UPS__: ["question 1", "question 2", "question 3"]
+
+DATASET (JSON):
+${dataset}`;
+}
+
+enum Provider {
+  Lovable = "lovable",
+  Google = "google",
+  Groq = "groq",
+}
+
+async function tryPrimaryProvider(
+  provider: Provider,
+  system: string,
+  messages: UIMessage[],
+): Promise<Response | null> {
+  try {
+    switch (provider) {
+      case Provider.Lovable: {
+        const key = process.env.LOVABLE_API_KEY!;
+        const gateway = createLovableAiGatewayProvider(key);
+        const model = gateway("google/gemini-3-flash-preview");
+        const result = streamText({
+          model,
+          system,
+          messages: await convertToModelMessages(messages),
+        });
+        return result.toUIMessageStreamResponse({ originalMessages: messages });
+      }
+      case Provider.Google: {
+        const contents = buildGoogleContents(system, messages);
+        return await createGoogleResponse(contents);
+      }
+      default:
+        return null;
+    }
+  } catch (error) {
+    console.error(`${provider} provider failed:`, error);
+    return null;
+  }
+}
+
 export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
@@ -97,8 +193,10 @@ export const Route = createFileRoute("/api/chat")({
 
         const lovableKey = process.env.LOVABLE_API_KEY;
         const googleKey = process.env.GOOGLE_API_KEY;
-        if (!lovableKey && !googleKey) {
-          return new Response("Missing LOVABLE_API_KEY or GOOGLE_API_KEY", {
+        const groqKey = process.env.GROQ_API_KEY;
+
+        if (!lovableKey && !googleKey && !groqKey) {
+          return new Response("Missing any API key (LOVABLE_API_KEY, GOOGLE_API_KEY, or GROQ_API_KEY)", {
             status: 500,
             headers: { "Content-Type": "text/plain; charset=utf-8" },
           });
@@ -106,33 +204,28 @@ export const Route = createFileRoute("/api/chat")({
 
         try {
           const dataset = buildDatasetContext();
-          const system = `You are the embedded analytics assistant for an FMCG Beverage Market Intelligence dashboard.
-Answer questions strictly about the dashboard, its tabs (Market Share, Channel Sales, HH Panel, SKU Performance), and the dataset provided below. The dataset spans 5 markets, monthly trend (Aug'24 - Mar'25), brand shares (Brand A/B/C/Others), channel offtake & growth, HH penetration & buying frequency, buyer funnel, and SKU revenue/distribution.
+          const system = buildSystemPrompt(dataset);
 
-Rules:
-- Be concise. Use markdown, short bullets, and tables when comparing markets/SKUs.
-- Cite exact numbers from the dataset; never invent values.
-- If a question is outside the dataset/dashboard, say so briefly and suggest a related question you CAN answer.
-- All currency is INR (Cr = crores, L = lakhs). Shares are %.
+          const providers: Provider[] = [];
+          if (lovableKey) providers.push(Provider.Lovable);
+          if (googleKey) providers.push(Provider.Google);
 
-DATASET (JSON):
-${dataset}`;
-
-          if (lovableKey) {
-            const gateway = createLovableAiGatewayProvider(lovableKey);
-            const model = gateway("google/gemini-3-flash-preview");
-
-            const result = streamText({
-              model,
-              system,
-              messages: await convertToModelMessages(messages),
-            });
-
-            return result.toUIMessageStreamResponse({ originalMessages: messages });
+          // Try primary providers in order
+          for (const p of providers) {
+            const result = await tryPrimaryProvider(p, system, messages);
+            if (result) return result;
           }
 
-          const contents = buildGoogleContents(system, messages);
-          return await createGoogleResponse(contents);
+          // Fallback to Groq if available
+          if (groqKey) {
+            console.info("Falling back to Groq LLM");
+            return await createGroqResponse(system, messages);
+          }
+
+          return new Response("All providers exhausted. Set GROQ_API_KEY for fallback.", {
+            status: 500,
+            headers: { "Content-Type": "text/plain; charset=utf-8" },
+          });
         } catch (error) {
           const message = error instanceof Error ? error.stack ?? error.message : String(error);
           console.error("/api/chat error:", message);
