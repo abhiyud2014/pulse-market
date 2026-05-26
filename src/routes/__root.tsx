@@ -74,7 +74,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Market Pulse Dashboard — FMCG Beverage Intelligence" },
       { name: "description", content: "Market Pulse Dashboard visualizes syndicated retail, shipment, and household panel data for FMCG & Beverages market intelligence." },
-      { name: "author", content: "Manas Rath" },
+      { name: "author", content: "MKR" },
       { property: "og:title", content: "Market Pulse Dashboard — FMCG Beverage Intelligence" },
       { property: "og:description", content: "Market Pulse Dashboard visualizes syndicated retail, shipment, and household panel data for FMCG & Beverages market intelligence." },
       { property: "og:type", content: "website" },

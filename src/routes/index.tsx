@@ -60,7 +60,7 @@ function Dashboard() {
             </div>
             <div>
               <h1 className="text-base font-bold md:text-lg">
-                FMCG Beverage — Market Intelligence
+                MKR · FMCG Beverage — Market Intelligence
               </h1>
               <p className="text-xs text-muted-foreground">
                 {reportData.subtitle}
@@ -128,7 +128,7 @@ function Dashboard() {
         </section>
 
         <footer className="pt-2 text-center text-xs text-muted-foreground">
-          Developed by <span className="font-semibold text-foreground/70">Manas Rath</span>. Data shown is illustrative/hypothetical.
+          Developed by <span className="font-semibold text-foreground/70">MKR</span>. Data shown is illustrative/hypothetical.
         </footer>
       </div>
       <ChatbotWidget />
