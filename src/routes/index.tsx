@@ -128,7 +128,7 @@ function Dashboard() {
         </section>
 
         <footer className="pt-2 text-center text-xs text-muted-foreground">
-          Developed by <span className="font-semibold text-foreground/70">Manas Rath</span>. Data shown is illustrative/hypothetical.
+          Developed by <span className="font-semibold text-foreground/70">Manas Rath</span>. All data is synthetically generated for demonstration purposes only — no proprietary or confidential data is used.
         </footer>
       </div>
       <ChatbotWidget />
